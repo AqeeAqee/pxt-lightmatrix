@@ -29,7 +29,7 @@ dirX = 0
 dirY = 0
 // basic.showIcon(IconNames.Heart)
 let strip = light.createNeoPixelStrip(pins.LED, 256, NeoPixelMode.RGB)
-let range = lightMatrix.create(strip, 8)
+let range = neoMatrix.create(strip, 8)
 range.setSLayout(NeoPixelSLayoutFlipRows.odd)
 // range.setBrightness(44)
 range.setMatrixTransponed(true)
@@ -56,9 +56,9 @@ basic.forever(function () {
         }
         // (m1+m2+":"+s1+s2)
         strip.clear()
-        range.printString(H, 0, y, lightMatrix.getAutoColorModes(AutoColorModes.rainbowXY))
-        range.printString(M, 11, y, lightMatrix.getAutoColorModes(AutoColorModes.rainbowY))
-        range.printString(S, 22, y, lightMatrix.getAutoColorModes(AutoColorModes.rainbowX))
+        range.printString(H, 0, y, neoMatrix.getAutoColorModes(AutoColorModes.rainbowXY))
+        range.printString(M, 11, y, neoMatrix.getAutoColorModes(AutoColorModes.rainbowY))
+        range.printString(S, 22, y, neoMatrix.getAutoColorModes(AutoColorModes.rainbowX))
         if (control.millis() % 1000 < 500) {
             range.printString(":", 9, y, 3)
             range.printString(":", 20, y, 3)

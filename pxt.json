@@ -3,10 +3,10 @@
     "description": "",
     "dependencies": {
         "device": "*",
-        "light": "*"
+        "light": "*",
+        "palette": "*"
     },
     "files": [
-        "main.ts",
         "README.md",
         "assets.json",
         "test.ts",
