@@ -9,7 +9,6 @@
     "files": [
         "README.md",
         "assets.json",
-        "test.ts",
         "light_matrix.ts"
     ],
     "testFiles": [

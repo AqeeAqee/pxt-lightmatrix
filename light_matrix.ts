@@ -27,6 +27,7 @@ enum NeoPixelSLayoutFlipRows {
  * Functions to operate NeoPixel Matrix.
  */
 //% weight=95 color="#0078d7" icon="\uf00a"
+//% groups='["Create", "Setup", "Display", "Color", "More"]'
 namespace neoMatrix {
     /**
      * A matrix light strip
@@ -35,10 +36,11 @@ namespace neoMatrix {
     /**
      * Create a new NeoPixel matrix from a light strip
      * @param strip the strip that matrix based on
-     * @param width how many light a row in this matrix 
+     * @param width how many light a row in this matrix, on the PCB
      */
-    //% blockId="neomatrix_create" block="Matrix of %strip with %width lights in a row"
-    //% weight=90 blockGap=8
+    //% blockId="neomatrix_create" block="Matrix of %strip=variables_get(strip) with %width lights in a row"
+    //% weight=95 blockGap=8
+    //% group="Create"
     //% blockSetVariable=matrix
     export function create(strip: light.LightStrip, width:number){
         const matrix = new Matrix(strip, width)
@@ -59,43 +61,16 @@ namespace neoMatrix {
         }
 
         /**
-         * Sets S layout in matrix shaped strip
-         * @param layout layout modes, normal or in S order
-         */
-        //% blockId=neopixel_set_S_layout block="%matrix|set S layout, flip rows %parity"
-        //% matrix.defl=matrix
-        //% blockGap=8
-        //% weight=25
-        //% parts="neopixel" advanced=true
-        setSLayout(parity: NeoPixelSLayoutFlipRows) {
-            this._sLayout = true
-            this._sLayoutFlipRows = parity
-        }
-
-        /**
          * Sets the number of pixels in a row on the PCB of matrix shaped neo pixels. NOTE! not the width after transponed
-         * @param width number of pixels in a row on the PCB. NOTE! not the width after transponed
+         * @param width number of pixels in a row on the PCB. NOTE! not the width after transponed. eg:8
          */
         //% blockId=neopixel_set_matrix_width block="%matrix|set matrix width %width"
         //% matrix.defl=matrix
-        //% blockGap=8
-        //% weight=31
-        //% parts="neopixel" advanced=true
+        //% weight=90 blockGap=8
+        //% group="Setup"
+        //% parts="neopixel"
         setMatrixWidth(width: number) {
             this._matrixWidth = Math.min(this.myStrip._length, width >> 0);
-        }
-
-        /**
-         * Sets matrix poseponed, x <--> y
-         * @param width number of pixels in a row
-         */
-        //% blockId=neopixel_set_matrix_transponed_width block="%matrix|set transponed matrix %transponed(true)"
-        //% matrix.defl=matrix
-        //% blockGap=8
-        //% weight=24
-        //% parts="neopixel" advanced=true
-        setMatrixTransponed(transponed: boolean) {
-            this._matrixTransponed = transponed
         }
 
         /**
@@ -107,8 +82,9 @@ namespace neoMatrix {
          */
         //% blockId="neomatrix_set_matrix_color" block="%matrix|set matrix color at x %x|y %y|to %rgb=neopixel_colors"
         //% matrix.defl=matrix
-        //% weight=29
-        //% parts="neopixel" advanced=true
+        //% weight=80
+        //% group="Display"
+        //% parts="neopixel"
         setMatrixColor(x: number, y: number, rgb: number) {
             if (this._matrixWidth <= 0) return; // not a matrix, ignore
             x = x >> 0;
@@ -143,7 +119,8 @@ namespace neoMatrix {
          * @param rgb RGB color of the LED
          */
         //% blockId="neomatrix_show_image" block="%matrix|show image %img=screen_image_picker at x %x|y %y|with %color=colorNumberPicker"
-        //% weight=22 blockGap=8 advanced=true inlineInputMode=inline
+        //% weight=70 blockGap=8 inlineInputMode=inline
+        //% group="Display"
         //% parts="ledmatrix" async
         showImage(img: Image, offsetX: number, offsetY: number) {
             const colors=palette.getCurrentColors()
@@ -151,7 +128,13 @@ namespace neoMatrix {
                 for (let x = 0; x < img.width; x++) {
                     const c = img.getPixel(x, y)
                     if (c){
-                        this.setMatrixColor(offsetX + x, offsetY + y, colors.color(c))
+                        let rgb=colors.color(c)
+                        rgb= color.rgb(
+                            color.unpackR(rgb) * this.rateR / 255,
+                            color.unpackG(rgb) * this.rateG / 255,
+                            color.unpackB(rgb) * this.rateB / 255
+                        )
+                        this.setMatrixColor(offsetX + x, offsetY + y, rgb)
                     }
                 }
             }
@@ -167,7 +150,8 @@ namespace neoMatrix {
          */
         //% blockId="neomatrix_print_string" block="%matrix|print %string at x %x|y %y|with %rgb=neopixel_colors"
         //% matrix.defl=matrix
-        //% weight=21 blockGap=8 advanced=true inlineInputMode=inline
+        //% weight=60 blockGap=8 inlineInputMode=inline
+        //% group="Display"
         //% parts="neopixel"
         printString(str: string, x: number, y: number, rgb: number) {
             for (let i = 0; i < str.length; i++) {
@@ -183,8 +167,9 @@ namespace neoMatrix {
          **/
         //% blockId="neomatrix_each_brightness" block="%matrix|dim brightness %percent |%" blockGap=8
         //% matrix.defl=matrix
-        //% weight=57
-        //% parts="neopixel" advanced=true
+        //% weight=50
+        //% group="Color"
+        //% parts="neopixel"
         dimBrightness(percent: number = 10): void {
             const stride = this.myStrip._mode === NeoPixelMode.RGBW ? 4 : 3;
             const br = this.myStrip.brightness();
@@ -236,10 +221,63 @@ namespace neoMatrix {
          */
         //% blockId="neomatrix_set_auto_color_loop_time" block="%matrix|set atuo color %loopTime"
         //% matrix.defl=matrix
-        //% weight=19
-        //% parts="neopixel" advanced=true
+        //% weight=45
+        //% group="Color"
+        //% parts="neopixel"
         setAutoColorLoopTime(loopTime: number = 5000) {
             this.autoColorLoopTime = loopTime
+        }
+
+    // advanced
+
+        /**
+         * Sets matrix poseponed, x <--> y
+         * @param width number of pixels in a row
+         */
+        //% blockId=neopixel_set_matrix_transponed_width block="%matrix|set transponed matrix %transponed(true)"
+        //% matrix.defl=matrix
+        //% transponed.defl=true
+        //% blockGap=8
+        //% weight=60
+        //% group="Setup"
+        //% parts="neopixel" advanced=true
+        setMatrixTransponed(transponed: boolean) {
+            this._matrixTransponed = transponed
+        }
+
+        /**
+         * Sets S layout in matrix shaped strip
+         * @param layout layout modes, normal or in S order
+         */
+        //% blockId=neopixel_set_S_layout block="%matrix|set S layout, flip rows %parity"
+        //% matrix.defl=matrix
+        //% blockGap=8
+        //% weight=50
+        //% group="Setup"
+        //% parts="neopixel" advanced=true
+        setSLayout(parity: NeoPixelSLayoutFlipRows) {
+            this._sLayout = true
+            this._sLayoutFlipRows = parity
+        }
+
+        rateR = 255
+        rateG = 255
+        rateB = 255
+        /**
+         * tune rates of colors (range 0-255 for r, g, b)
+         * @param rateR red rate 0~255. eg:255
+         * @param rateG red rate 0~255. eg:255
+         * @param rateB red rate 0~255. eg:255
+         */
+        //% blockId="neomatrix_set_color_rates" block="%matrix|set matrix color rates R %rateR|G %rateG|B %rateB"
+        //% matrix.defl=matrix
+        //% weight=40
+        //% group="Color"
+        //% parts="neopixel" advanced=true
+        setColorRates(rateR: number, rateG: number, rateB: number) {
+            this.rateR = rateR
+            this.rateG = rateG
+            this.rateB = rateB
         }
 
     }
@@ -247,9 +285,9 @@ namespace neoMatrix {
     /**
      * Gets the auto color modes
     */
-    //% weight=20 blockGap=8
+    //% weight=48 blockGap=8
     //% blockId="neomatrix_auto_color_modes" block="%mode"
-    //% advanced=true
+    //% group="Color"
     export function getAutoColorModes(mode: AutoColorModes): number {
         return mode;
     }
