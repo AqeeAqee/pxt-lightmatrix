@@ -3,10 +3,10 @@ let bg = image.create(160, 120)
 scene.setBackgroundImage(bg)
 
 let strip2: light.NeoPixelStrip = null
-let colorRate: number[] = [255, 255, 255]
+let colorRate: number[] = [255, 111, 111]
 let indexC: number = 0
 
-strip2 = light.createStrip(pins.pinByCfg(DAL.CFG_PIN_D15), 256)
+strip2 = light.createStrip(pins.pinByCfg(416), 192) //416=CFG_PIN_P16
 strip2.setMode(NeoPixelMode.RGB)
 strip2.setBrightness(255)
 strip2.setBuffered(true)
@@ -167,7 +167,7 @@ game.onUpdateInterval(150, function () {
     strip2.show()
 })
 
-
+//color rates
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     if (--indexC < 0)
         indexC = 2
@@ -201,10 +201,4 @@ function setNeoPixel() {
     bg.print(colorRate.join(), 0, 0, 1)
     bg.print("^", indexC * 22 + 10, 12, 2)
     matrix.setColorRates(colorRate[0], colorRate[1], colorRate[2])
-
-    // strip2.setAll(0x111111)
-
-    // matrix.showImage(ani[iAni], 0, 0)
-    // strip2.show()
-
 }

@@ -130,9 +130,9 @@ namespace neoMatrix {
                     if (c){
                         let rgb=colors.color(c)
                         rgb= color.rgb(
-                            color.unpackR(rgb) * this.rateR / 255,
-                            color.unpackG(rgb) * this.rateG / 255,
-                            color.unpackB(rgb) * this.rateB / 255
+                            color.unpackR(rgb) * this.rateR >>8,
+                            color.unpackG(rgb) * this.rateG >>8,
+                            color.unpackB(rgb) * this.rateB >>8
                         )
                         this.setMatrixColor(offsetX + x, offsetY + y, rgb)
                     }
