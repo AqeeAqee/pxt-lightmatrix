@@ -224,7 +224,7 @@ namespace neoMatrix {
             }
             if (this.autoColorLoopTime)
                 hue += 360 - (control.millis() % this.autoColorLoopTime) * 360 / this.autoColorLoopTime
-            return light.hsv(hue, 99, this.myStrip.brightness())
+            return light.hsv(hue, 255, this.myStrip.brightness())
         }
 
         autoColorLoopTime: number
