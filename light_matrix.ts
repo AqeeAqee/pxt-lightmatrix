@@ -50,12 +50,15 @@ namespace neoMatrix {
     export class Matrix {
         myStrip:light.LightStrip
 
-        _matrixWidth: number; // number of leds in a matrix - if any
+        _matrixWidth: number; // number of leds in a row of this matrix
+        
         _sLayout: boolean
         _sLayoutFlipRows: NeoPixelSLayoutFlipRows;
         _matrixTransponed: boolean
 
         constructor(strip: light.LightStrip, width:number){
+            width|=0
+            if(width<1) width=1
             this.myStrip=strip
             this._matrixWidth= width
         }
@@ -111,54 +114,67 @@ namespace neoMatrix {
                 index = index + this._matrixWidth - 1 - 2 * (index % this._matrixWidth) - this.myStrip._start
             }
             
-            this.myStrip.setPixelColor(index, rgb);
+            //rated colors
+            this.myStrip.setPixelColor(index, this.getRatedRGB(rgb))
         }
 
         /**
          * Shows a image to a given color 
-         * @param rgb RGB color of the LED
+         * @param rgb a rgb color for solid fill, or one of auto colors for rainbow fill
          */
-        //% blockId="neomatrix_show_image" block="%matrix|show image %img=screen_image_picker at x %x|y %y|with %color=colorNumberPicker"
+        //% blockId="neomatrix_show_image" block="%matrix|show image %img=screen_image_picker at x %x|y %y||with %rgb=neopixel_colors"
         //% weight=70 blockGap=8 inlineInputMode=inline
         //% group="Display"
         //% parts="ledmatrix" async
-        showImage(img: Image, offsetX: number, offsetY: number) {
+        showImage(img: Image, offsetX: number, offsetY: number, rgb?:number) {
             const colors=palette.getCurrentColors()
             for (let y = 0; y < img.height; y++) {
                 for (let x = 0; x < img.width; x++) {
-                    const c = img.getPixel(x, y)
-                    if (c){
-                        let rgb=colors.color(c)
-                        rgb= color.rgb(
-                            color.unpackR(rgb) * this.rateR >>8,
-                            color.unpackG(rgb) * this.rateG >>8,
-                            color.unpackB(rgb) * this.rateB >>8
-                        )
-                        this.setMatrixColor(offsetX + x, offsetY + y, rgb)
+                    const cPix = img.getPixel(x, y)
+                    if (cPix){
+                        this.setMatrixColor(offsetX + x, offsetY + y, rgb ? rgb : colors.color(cPix))
                     }
                 }
             }
-            // this.show();
         }
 
+        getRatedRGB(rgb:number):number{
+            return color.rgb(
+                color.unpackR(rgb) * this.rateR >> 8,
+                color.unpackG(rgb) * this.rateG >> 8,
+                color.unpackB(rgb) * this.rateB >> 8
+            )
+        }
+
+        bufImg:Image
         /**
-         * get a image of a char from defualt font.
-         * return the font of first letter if there's multi letter in parameter 'char'
-         * or return empty image if char is empty
-         * @param char string with one letter which font will be in returned image
-         * @param rgb RGB color of the LED
+         * print a text on matrix lights
+         * @param text string to be printed
+         * @param rgb an rgb color or one of auto color modes
          */
-        //% blockId="neomatrix_print_string" block="%matrix|print %string at x %x|y %y|with %rgb=neopixel_colors"
+        //% blockId="neomatrix_print" block="%matrix|print %text at x %x|y %y|with %rgb=neopixel_colors"
         //% matrix.defl=matrix
         //% weight=60 blockGap=8 inlineInputMode=inline
         //% group="Display"
         //% parts="neopixel"
-        printString(str: string, x: number, y: number, rgb: number) {
-            for (let i = 0; i < str.length; i++) {
-                // plotCharFont(str[i], (fx, fy) => {
-                //     this.setMatrixColor(x + fx + i * neopixel.MICROBIT_FONT_WIDTH, y + fy, rgb)
-                // })
+        print(text: string, x: number, y: number, rgb: number) {
+            const width = this.getWidth()
+            const height = this.getHeight()
+            if(!this.bufImg||this.bufImg.width!=width||this.bufImg.height!=height){
+                this.bufImg=image.create(width,height)
+            }else{
+                this.bufImg.fill(0)
             }
+            this.bufImg.print(text, x, y, 1)
+            this.showImage(this.bufImg, 0, 0, rgb)
+        }
+
+        getWidth(){
+            return this._matrixTransponed ? this.myStrip._length / this._matrixWidth : this._matrixWidth
+        }
+
+        getHeight(){
+            return !this._matrixTransponed ? this.myStrip._length / this._matrixWidth : this._matrixWidth
         }
 
         /**
@@ -187,10 +203,10 @@ namespace neoMatrix {
             }
         }
 
-        getAutoColor(x: number, y: number, mode: AutoColorModes) {
+        getAutoColor(x: number, y: number, mode: AutoColorModes):number {
             let hue
-            const width = this._matrixTransponed ? this.myStrip.length() / this._matrixWidth : this._matrixWidth
-            const height = this._matrixTransponed ? this._matrixWidth : this.myStrip.length() / this._matrixWidth
+            const width = this.getWidth()
+            const height =this.getHeight()
             switch (mode) {
                 case AutoColorModes.rainbowX:
                     hue = (x + 1) * 360 / (width)
@@ -202,6 +218,7 @@ namespace neoMatrix {
                     hue = (x + y + 1) * 360 / (width + height)
                     break;
                 case AutoColorModes.rainbowCenter:
+                default:
                     hue = (Math.abs(x - width / 2) + Math.abs(y - height / 2)) * 360 / (width + height)
                     break;
             }
@@ -213,13 +230,11 @@ namespace neoMatrix {
         autoColorLoopTime: number
 
         /**
-         * Set LED to a given color (range 0-255 for r, g, b) in a matrix shaped strip
+         * Set loop time span for auto filled rainbow color
          * You need to call ``show`` to make the changes visible.
-         * @param x horizontal position
-         * @param y horizontal position
-         * @param rgb RGB color of the LED
+         * @param loopTime how long time rainbow color loop around. fixed rainbow fill, if not set. eg:5000
          */
-        //% blockId="neomatrix_set_auto_color_loop_time" block="%matrix|set atuo color %loopTime"
+        //% blockId="neomatrix_set_auto_color_loop_time" block="%matrix|set auto color %loopTime"
         //% matrix.defl=matrix
         //% weight=45
         //% group="Color"

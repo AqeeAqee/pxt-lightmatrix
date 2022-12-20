@@ -3,7 +3,7 @@ let bg = image.create(160, 120)
 scene.setBackgroundImage(bg)
 
 let strip2: light.NeoPixelStrip = null
-let colorRate: number[] = [255, 111, 111]
+let colorRate: number[] = [255, 99, 66]
 let indexC: number = 0
 
 strip2 = light.createStrip(pins.pinByCfg(416), 192) //416=CFG_PIN_P16
@@ -149,7 +149,8 @@ let showSprite = sprites.create(testImg, SpriteKind.Player)
 showSprite.setScale(6, ScaleAnchor.Left)
 
 
-let py = 0, diry = -1
+let px = 0, dirx = 1
+let py = 0, diry = 1
 let iFrame=0,iAni = 0, dirAni = 1
 game.onUpdateInterval(150, function () {
     if (++iFrame >= anis[iAni].length) {
@@ -157,13 +158,16 @@ game.onUpdateInterval(150, function () {
         if(iAni>=anis.length)
             iAni=0
     }
-    // py += diry
-    // if (py < -8 || py > 0) diry *= -1
+    py += diry
+    if (py < 0 || py > 8) diry *= -1
+    px += dirx
+    if (px < -10 || px > 0) dirx *= -1
 
     strip2.setAll(0x010001)
     const frame = anis[iAni][iFrame]
-    matrix.showImage(frame, 0, py)
-    showSprite.setImage(frame)
+    // matrix.showImage(frame, 0, py)
+    // showSprite.setImage(frame)
+    matrix.print("test",px,py,-2)
     strip2.show()
 })
 
